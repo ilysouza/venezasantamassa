@@ -1,1377 +1,1843 @@
-
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
-  Image,
   Modal,
   Pressable,
+  SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   View,
-  useWindowDimensions,
 } from "react-native";
 
-const COLORS = {
-  red: "#C9232C",
-  darkRed: "#971A21",
-  orange: "#F28C28",
-  cream: "#FFF8F0",
-  white: "#FFFFFF",
-  dark: "#292321",
-  gray: "#77716D",
-  lightGray: "#F0EBE6",
-  green: "#23834D",
-};
+import AddressScreen from "./AddressScreen";
 
 const PRODUCTS = [
   {
-    id: "p1",
-    name: "Calabresa Especial",
-    description: "Calabresa, cebola e mussarela.",
-    price: 39.9,
-    category: "Salgadas",
-    image:
-      "https://images.unsplash.com/photo-1579751626657-72bc17010498?w=900",
-    popular: true,
-  },
-  {
-    id: "p2",
-    name: "Quatro Queijos",
-    description: "Mussarela, provolone, parmesão e gorgonzola.",
-    price: 45.9,
-    category: "Salgadas",
-    image:
-      "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=900",
-    popular: true,
-  },
-  {
-    id: "p3",
-    name: "Frango com Catupiry",
-    description: "Frango temperado, catupiry e mussarela.",
-    price: 43.9,
-    category: "Salgadas",
-    image:
-      "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=900",
-    popular: false,
-  },
-  {
-    id: "p4",
+    id: 1,
     name: "Margherita",
-    description: "Mussarela, tomate fresco e manjericão.",
-    price: 38.9,
-    category: "Salgadas",
+    description: "Molho de tomate, muçarela, tomate e manjericão.",
+    price: 39.9,
+    category: "Tradicionais",
     image:
-      "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=900",
-    popular: false,
+      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=80",
   },
   {
-    id: "p5",
-    name: "Chocolate com Morango",
-    description: "Chocolate cremoso e morangos.",
+    id: 2,
+    name: "Calabresa",
+    description: "Molho de tomate, muçarela, calabresa e cebola.",
     price: 42.9,
-    category: "Doces",
+    category: "Tradicionais",
     image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=900",
-    popular: true,
+      "https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80",
   },
   {
-    id: "p6",
-    name: "Banana com Canela",
-    description: "Banana, açúcar e canela.",
-    price: 35.9,
+    id: 3,
+    name: "Frango com Catupiry",
+    description: "Frango desfiado, muçarela e Catupiry.",
+    price: 46.9,
+    category: "Especiais",
+    image:
+      "https://images.unsplash.com/photo-1593560708920-61dd98c8a3f2?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: 4,
+    name: "Quatro Queijos",
+    description: "Muçarela, provolone, parmesão e gorgonzola.",
+    price: 49.9,
+    category: "Especiais",
+    image:
+      "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: 5,
+    name: "Pepperoni",
+    description: "Molho de tomate, muçarela e muito pepperoni.",
+    price: 47.9,
+    category: "Especiais",
+    image:
+      "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: 6,
+    name: "Chocolate",
+    description: "Chocolate cremoso e confeitos.",
+    price: 36.9,
     category: "Doces",
     image:
-      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900",
-    popular: false,
+      "https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
-const SIZES = [
-  { name: "Pequena", detail: "4 fatias", multiplier: 0.7 },
-  { name: "Média", detail: "6 fatias", multiplier: 1 },
-  { name: "Grande", detail: "8 fatias", multiplier: 1.3 },
-  { name: "Família", detail: "12 fatias", multiplier: 1.6 },
-];
-
-const CRUSTS = [
-  { name: "Tradicional", price: 0 },
-  { name: "Catupiry", price: 7 },
-  { name: "Cheddar", price: 7 },
-  { name: "Chocolate", price: 9 },
-];
-
-const EXTRAS = [
-  { name: "Mussarela extra", price: 5 },
-  { name: "Bacon", price: 6 },
-  { name: "Calabresa extra", price: 5 },
-  { name: "Azeitona", price: 2.5 },
-];
-
-const CATEGORIES = ["Todas", "Salgadas", "Doces"];
-
-function money(value) {
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
+const CATEGORIES = ["Todos", "Tradicionais", "Especiais", "Doces"];
 
 export default function MainApp() {
-  const { width } = useWindowDimensions();
-  const wide = width >= 700;
-  const [activeTab, setActiveTab] = useState("Início");
-  const [category, setCategory] = useState("Todas");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [activeTab, setActiveTab] = useState("home");
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
+
+  const [cart, setCart] = useState([]);
+
+  const [selectedPizza, setSelectedPizza] = useState(null);
   const [selectedSize, setSelectedSize] = useState("Média");
   const [selectedCrust, setSelectedCrust] = useState("Tradicional");
   const [selectedExtras, setSelectedExtras] = useState([]);
-  const [quantity, setQuantity] = useState(1);
-  const [cart, setCart] = useState([]);
+  const [pizzaQuantity, setPizzaQuantity] = useState(1);
 
-  useEffect(() => {
-    if (selectedProduct) {
-      setSelectedSize("Média");
-      setSelectedCrust("Tradicional");
-      setSelectedExtras([]);
-      setQuantity(1);
+  const [showAddressScreen, setShowAddressScreen] = useState(false);
+
+  const [points, setPoints] = useState(120);
+  const [coupon, setCoupon] = useState(null);
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "Todos") {
+      return PRODUCTS;
     }
-  }, [selectedProduct]);
 
-  const visibleProducts = useMemo(() => {
-    if (category === "Todas") return PRODUCTS;
-    return PRODUCTS.filter((product) => product.category === category);
-  }, [category]);
-
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + item.unitPrice * item.quantity,
-    0
-  );
-
-  function calculatePrice(product, size, crust, extras) {
-    const sizeOption = SIZES.find((item) => item.name === size);
-    const crustOption = CRUSTS.find((item) => item.name === crust);
-
-    const extrasPrice = extras.reduce((sum, extraName) => {
-      const extra = EXTRAS.find((item) => item.name === extraName);
-      return sum + (extra ? extra.price : 0);
-    }, 0);
-
-    return (
-      product.price * (sizeOption ? sizeOption.multiplier : 1) +
-      (crustOption ? crustOption.price : 0) +
-      extrasPrice
+    return PRODUCTS.filter(
+      (product) => product.category === selectedCategory
     );
+  }, [selectedCategory]);
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const cartQuantity = useMemo(() => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  }, [cart]);
+
+  function openPizza(product) {
+    setSelectedPizza(product);
+    setSelectedSize("Média");
+    setSelectedCrust("Tradicional");
+    setSelectedExtras([]);
+    setPizzaQuantity(1);
   }
 
-  const customizationPrice = selectedProduct
-    ? calculatePrice(
-        selectedProduct,
-        selectedSize,
-        selectedCrust,
-        selectedExtras
-      )
-    : 0;
+  function toggleExtra(extra) {
+    setSelectedExtras((current) => {
+      if (current.includes(extra)) {
+        return current.filter((item) => item !== extra);
+      }
 
-  function toggleExtra(extraName) {
-    setSelectedExtras((current) =>
-      current.includes(extraName)
-        ? current.filter((name) => name !== extraName)
-        : [...current, extraName]
-    );
+      return [...current, extra];
+    });
   }
 
   function addToCart() {
-    if (!selectedProduct) return;
+    if (!selectedPizza) return;
 
-    const item = {
-      cartId: `${Date.now()}-${Math.random()}`,
-      productId: selectedProduct.id,
-      name: selectedProduct.name,
-      image: selectedProduct.image,
+    let extraPrice = 0;
+
+    if (selectedExtras.includes("Bacon")) {
+      extraPrice += 5;
+    }
+
+    if (selectedExtras.includes("Cheddar")) {
+      extraPrice += 4;
+    }
+
+    if (selectedExtras.includes("Azeitona")) {
+      extraPrice += 2;
+    }
+
+    let sizePrice = 0;
+
+    if (selectedSize === "Grande") {
+      sizePrice = 8;
+    }
+
+    if (selectedSize === "Família") {
+      sizePrice = 15;
+    }
+
+    const finalPrice = selectedPizza.price + sizePrice + extraPrice;
+
+    const newItem = {
+      id: `${selectedPizza.id}-${Date.now()}`,
+      productId: selectedPizza.id,
+      name: selectedPizza.name,
       size: selectedSize,
       crust: selectedCrust,
-      extras: [...selectedExtras],
-      quantity,
-      unitPrice: customizationPrice,
+      extras: selectedExtras,
+      quantity: pizzaQuantity,
+      price: finalPrice,
     };
 
-    setCart((current) => [...current, item]);
-    setSelectedProduct(null);
-    setActiveTab("Sacola");
+    setCart((current) => [...current, newItem]);
+
+    setSelectedPizza(null);
 
     Alert.alert(
-      "Pizza adicionada! 🍕",
-      `${item.name} foi adicionada à sua sacola.`
+      "Adicionado! 🍕",
+      `${selectedPizza.name} foi adicionada à sua sacola.`
     );
   }
 
-  function changeCartQuantity(cartId, change) {
+  function increaseCartItem(id) {
+    setCart((current) =>
+      current.map((item) =>
+        item.id === id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    );
+  }
+
+  function decreaseCartItem(id) {
     setCart((current) =>
       current
         .map((item) =>
-          item.cartId === cartId
-            ? { ...item, quantity: item.quantity + change }
+          item.id === id
+            ? { ...item, quantity: item.quantity - 1 }
             : item
         )
         .filter((item) => item.quantity > 0)
     );
   }
 
-  function removeFromCart(cartId) {
-    setCart((current) => current.filter((item) => item.cartId !== cartId));
-  }
+  function generateCoupon() {
+    const coupons = [
+      "PIZZA10",
+      "MASSA15",
+      "VENEZA20",
+      "QUEIJO10",
+      "SABOR15",
+    ];
 
-  function openProduct(product) {
-    setSelectedProduct(product);
-  }
+    const randomCoupon =
+      coupons[Math.floor(Math.random() * coupons.length)];
 
-  function ProductCard({ product }) {
-    return (
-      <View style={[styles.productCard, { width: wide ? 300 : "48%" }]}>
-        <Pressable onPress={() => openProduct(product)}>
-          <Image source={{ uri: product.image }} style={styles.productImage} />
-          {product.popular && (
-            <View style={styles.popularTag}>
-              <Text style={styles.popularTagText}>⭐ Queridinha</Text>
-            </View>
-          )}
-          <View style={styles.productInfo}>
-            <Text style={styles.productName}>{product.name}</Text>
-            <Text style={styles.productDescription} numberOfLines={2}>
-              {product.description}
-            </Text>
-            <Text style={styles.productPrice}>{money(product.price)}</Text>
-            <Text style={styles.customizeHint}>Preço inicial • Personalizar</Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => openProduct(product)}
-        >
-          <Text style={styles.addButtonText}>+ Escolher pizza</Text>
-        </Pressable>
-      </View>
+    setCoupon(randomCoupon);
+    setPoints((current) => Math.max(0, current - 50));
+
+    Alert.alert(
+      "Cupom conquistado! 🎉",
+      `Seu cupom é: ${randomCoupon}`
     );
   }
 
-  function renderProducts(products) {
-    if (products.length === 0) {
-      return <Text style={styles.muted}>Nenhuma pizza nesta categoria.</Text>;
+  function checkout() {
+    if (cart.length === 0) {
+      Alert.alert("Sacola vazia", "Adicione uma pizza antes de continuar.");
+      return;
     }
 
-    return (
-      <View style={styles.productsGrid}>
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </View>
+    Alert.alert(
+      "Pedido",
+      `Seu pedido de R$ ${cartTotal.toFixed(
+        2
+      )} está pronto para o checkout.`
     );
   }
 
   function renderHome() {
     return (
-      <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.hero}>
-          <View style={styles.heroText}>
-            <Text style={styles.heroEyebrow}>FEITA COM CARINHO ❤️</Text>
-            <Text style={styles.heroTitle}>Sua próxima pizza favorita!</Text>
-            <Text style={styles.heroDescription}>
-              Sabores especiais para deixar seu dia mais gostoso.
+          <Text style={styles.heroSmall}>🍕 VENEZA</Text>
+
+          <Text style={styles.heroTitle}>
+            Santa Massa
+          </Text>
+
+          <Text style={styles.heroText}>
+            A pizza que deixa seu dia muito mais gostoso.
+          </Text>
+
+          <Pressable
+            style={styles.heroButton}
+            onPress={() => setActiveTab("menu")}
+          >
+            <Text style={styles.heroButtonText}>
+              Pedir agora
             </Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.sectionTitle}>
+          Categorias
+        </Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+        >
+          {CATEGORIES.map((category) => (
             <Pressable
-              style={styles.heroButton}
-              onPress={() => setActiveTab("Cardápio")}
+              key={category}
+              onPress={() => {
+                setSelectedCategory(category);
+                setActiveTab("menu");
+              }}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category &&
+                  styles.categoryButtonActive,
+              ]}
             >
-              <Text style={styles.heroButtonText}>Ver cardápio 🍕</Text>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category &&
+                    styles.categoryTextActive,
+                ]}
+              >
+                {category}
+              </Text>
             </Pressable>
+          ))}
+        </ScrollView>
+
+        <Text style={styles.sectionTitle}>
+          Mais pedidas 🔥
+        </Text>
+
+        {PRODUCTS.slice(0, 3).map((product) => (
+          <PizzaCard
+            key={product.id}
+            product={product}
+            onPress={() => openPizza(product)}
+          />
+        ))}
+
+        <View style={styles.promoCard}>
+          <Text style={styles.promoEmoji}>🎁</Text>
+
+          <View style={{ flex: 1 }}>
+            <Text style={styles.promoTitle}>
+              Quer ganhar descontos?
+            </Text>
+
+            <Text style={styles.promoText}>
+              Jogue nossos jogos e acumule pontos.
+            </Text>
           </View>
-        </View>
 
-        <SectionTitle title="As mais pedidas" subtitle="Favoritas da casa" />
-        {renderProducts(PRODUCTS.filter((product) => product.popular))}
-
-        <SectionTitle title="Escolha seu sabor" subtitle="Temos opções para todos" />
-        <View style={styles.categoryGrid}>
           <Pressable
-            style={styles.categoryCard}
-            onPress={() => {
-              setCategory("Salgadas");
-              setActiveTab("Cardápio");
-            }}
+            style={styles.smallButton}
+            onPress={() => setActiveTab("games")}
           >
-            <Text style={styles.categoryEmoji}>🍕</Text>
-            <Text style={styles.categoryName}>Pizzas salgadas</Text>
-          </Pressable>
-          <Pressable
-            style={styles.categoryCard}
-            onPress={() => {
-              setCategory("Doces");
-              setActiveTab("Cardápio");
-            }}
-          >
-            <Text style={styles.categoryEmoji}>🍫</Text>
-            <Text style={styles.categoryName}>Pizzas doces</Text>
+            <Text style={styles.smallButtonText}>
+              Jogar
+            </Text>
           </Pressable>
         </View>
-      </>
+      </ScrollView>
     );
   }
 
   function renderMenu() {
     return (
-      <>
-        <SectionTitle
-          title="Nosso cardápio"
-          subtitle="Escolha, personalize e aproveite!"
-        />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.pageTitle}>
+          Nosso Cardápio 🍕
+        </Text>
 
-        <View style={styles.categoryFilters}>
-          {CATEGORIES.map((item) => (
+        <Text style={styles.pageSubtitle}>
+          Escolha sua pizza favorita.
+        </Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 18 }}
+        >
+          {CATEGORIES.map((category) => (
             <Pressable
-              key={item}
-              onPress={() => setCategory(item)}
+              key={category}
+              onPress={() => setSelectedCategory(category)}
               style={[
-                styles.filterButton,
-                category === item && styles.filterButtonActive,
+                styles.categoryButton,
+                selectedCategory === category &&
+                  styles.categoryButtonActive,
               ]}
             >
               <Text
                 style={[
-                  styles.filterText,
-                  category === item && styles.filterTextActive,
+                  styles.categoryText,
+                  selectedCategory === category &&
+                    styles.categoryTextActive,
                 ]}
               >
-                {item}
+                {category}
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
 
-        {renderProducts(visibleProducts)}
-      </>
+        {filteredProducts.map((product) => (
+          <PizzaCard
+            key={product.id}
+            product={product}
+            onPress={() => openPizza(product)}
+          />
+        ))}
+      </ScrollView>
     );
   }
 
   function renderCart() {
     return (
-      <>
-        <SectionTitle
-          title="Sua sacola"
-          subtitle="Confira suas pizzas personalizadas"
-        />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.pageTitle}>
+          Minha Sacola 🛍️
+        </Text>
 
         {cart.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🛍️</Text>
-            <Text style={styles.emptyTitle}>Sua sacola está vazia</Text>
-            <Text style={styles.muted}>
-              Escolha uma pizza no cardápio para começar!
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyEmoji}>🍕</Text>
+
+            <Text style={styles.emptyTitle}>
+              Sua sacola está vazia
             </Text>
+
+            <Text style={styles.emptyText}>
+              Que tal escolher uma pizza deliciosa?
+            </Text>
+
             <Pressable
               style={styles.primaryButton}
-              onPress={() => setActiveTab("Cardápio")}
+              onPress={() => setActiveTab("menu")}
             >
-              <Text style={styles.primaryButtonText}>Ir para o cardápio</Text>
+              <Text style={styles.primaryButtonText}>
+                Ver cardápio
+              </Text>
             </Pressable>
           </View>
         ) : (
           <>
             {cart.map((item) => (
-              <View key={item.cartId} style={styles.cartItem}>
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.cartImage}
-                />
-                <View style={styles.cartDetails}>
-                  <Text style={styles.cartName}>{item.name}</Text>
-                  <Text style={styles.cartOption}>Tamanho: {item.size}</Text>
-                  <Text style={styles.cartOption}>Borda: {item.crust}</Text>
+              <View
+                key={item.id}
+                style={styles.cartItem}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cartItemName}>
+                    {item.name}
+                  </Text>
+
+                  <Text style={styles.cartItemDetails}>
+                    {item.size} • {item.crust}
+                  </Text>
+
                   {item.extras.length > 0 && (
-                    <Text style={styles.cartOption}>
+                    <Text style={styles.cartItemDetails}>
                       Extras: {item.extras.join(", ")}
                     </Text>
                   )}
+
                   <Text style={styles.cartPrice}>
-                    {money(item.unitPrice * item.quantity)}
+                    R$ {item.price.toFixed(2)}
                   </Text>
-                  <View style={styles.quantityRow}>
-                    <Pressable
-                      style={styles.quantityButton}
-                      onPress={() => changeCartQuantity(item.cartId, -1)}
-                    >
-                      <Text style={styles.quantityButtonText}>−</Text>
-                    </Pressable>
-                    <Text style={styles.quantityText}>{item.quantity}</Text>
-                    <Pressable
-                      style={styles.quantityButton}
-                      onPress={() => changeCartQuantity(item.cartId, 1)}
-                    >
-                      <Text style={styles.quantityButtonText}>+</Text>
-                    </Pressable>
-                    <Pressable onPress={() => removeFromCart(item.cartId)}>
-                      <Text style={styles.removeText}>Remover</Text>
-                    </Pressable>
-                  </View>
+                </View>
+
+                <View style={styles.quantityBox}>
+                  <Pressable
+                    onPress={() =>
+                      decreaseCartItem(item.id)
+                    }
+                    style={styles.quantityButton}
+                  >
+                    <Text style={styles.quantityButtonText}>
+                      −
+                    </Text>
+                  </Pressable>
+
+                  <Text style={styles.quantityText}>
+                    {item.quantity}
+                  </Text>
+
+                  <Pressable
+                    onPress={() =>
+                      increaseCartItem(item.id)
+                    }
+                    style={styles.quantityButton}
+                  >
+                    <Text style={styles.quantityButtonText}>
+                      +
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
             ))}
 
             <View style={styles.totalCard}>
-              <Text style={styles.totalLabel}>Total parcial</Text>
-              <Text style={styles.totalPrice}>{money(cartTotal)}</Text>
-              <Text style={styles.cartNotice}>
-                Entrega e pagamento serão configurados em uma próxima etapa.
-              </Text>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>
+                  Subtotal
+                </Text>
+
+                <Text style={styles.totalValue}>
+                  R$ {cartTotal.toFixed(2)}
+                </Text>
+              </View>
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>
+                  Entrega
+                </Text>
+
+                <Text style={styles.totalValue}>
+                  R$ 5,00
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalFinalLabel}>
+                  Total
+                </Text>
+
+                <Text style={styles.totalFinalValue}>
+                  R$ {(cartTotal + 5).toFixed(2)}
+                </Text>
+              </View>
+
               <Pressable
-                style={styles.primaryButton}
-                onPress={() =>
-                  Alert.alert(
-                    "Próxima etapa",
-                    "A sacola está funcionando! Vamos configurar a finalização do pedido depois."
-                  )
-                }
+                style={styles.checkoutButton}
+                onPress={checkout}
               >
-                <Text style={styles.primaryButtonText}>
-                  Continuar pedido
+                <Text style={styles.checkoutButtonText}>
+                  Continuar para pagamento
                 </Text>
               </Pressable>
             </View>
           </>
         )}
-      </>
+      </ScrollView>
     );
   }
 
   function renderGames() {
     return (
-      <>
-        <SectionTitle title="Diversão na casa" subtitle="Em breve, mais novidades!" />
-        <View style={styles.featureCard}>
-          <Text style={styles.featureEmoji}>🎁</Text>
-          <Text style={styles.featureTitle}>Roleta de cupons</Text>
-          <Text style={styles.muted}>
-            Uma área para brincar e descobrir ofertas especiais.
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={styles.pageTitle}>
+          Jogos 🎮
+        </Text>
+
+        <Text style={styles.pageSubtitle}>
+          Divirta-se e ganhe pontos para trocar por descontos.
+        </Text>
+
+        <View style={styles.pointsCard}>
+          <Text style={styles.pointsLabel}>
+            Seus pontos
           </Text>
+
+          <Text style={styles.pointsValue}>
+            ⭐ {points}
+          </Text>
+        </View>
+
+        <View style={styles.gameCard}>
+          <Text style={styles.gameEmoji}>
+            🎡
+          </Text>
+
+          <Text style={styles.gameTitle}>
+            Roleta da Sorte
+          </Text>
+
+          <Text style={styles.gameText}>
+            Gaste 50 pontos e tente ganhar um cupom.
+          </Text>
+
           <Pressable
-            style={styles.primaryButton}
-            onPress={() =>
-              Alert.alert("Em breve!", "A roleta de cupons será desenvolvida em outra etapa.")
-            }
+            style={[
+              styles.primaryButton,
+              points < 50 && styles.disabledButton,
+            ]}
+            disabled={points < 50}
+            onPress={generateCoupon}
           >
-            <Text style={styles.primaryButtonText}>Ver novidades</Text>
+            <Text style={styles.primaryButtonText}>
+              Girar roleta
+            </Text>
           </Pressable>
         </View>
-      </>
+
+        {coupon && (
+          <View style={styles.couponCard}>
+            <Text style={styles.couponTitle}>
+              🎉 Seu cupom
+            </Text>
+
+            <Text style={styles.couponCode}>
+              {coupon}
+            </Text>
+
+            <Text style={styles.couponText}>
+              Use esse código no seu próximo pedido.
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.gameCard}>
+          <Text style={styles.gameEmoji}>
+            🏆
+          </Text>
+
+          <Text style={styles.gameTitle}>
+            Desafio do dia
+          </Text>
+
+          <Text style={styles.gameText}>
+            Faça um pedido hoje e ganhe 30 pontos extras.
+          </Text>
+
+          <Pressable
+            style={styles.secondaryButton}
+            onPress={() => {
+              setPoints((current) => current + 30);
+              Alert.alert(
+                "Desafio concluído!",
+                "+30 pontos adicionados."
+              );
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>
+              Concluir desafio
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     );
   }
 
   function renderProfile() {
     return (
-      <>
-        <SectionTitle title="Meu perfil" subtitle="Sua experiência Veneza" />
-        <View style={styles.profileCard}>
-          <Text style={styles.profileEmoji}>👤</Text>
-          <Text style={styles.featureTitle}>Olá, cliente!</Text>
-          <Text style={styles.muted}>
-            Aqui ficarão seus dados, endereços e histórico de pedidos.
-          </Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.profileHeader}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              V
+            </Text>
+          </View>
+
+          <View>
+            <Text style={styles.profileName}>
+              Olá, cliente! 👋
+            </Text>
+
+            <Text style={styles.profileEmail}>
+              Bem-vindo à Veneza Santa Massa
+            </Text>
+          </View>
         </View>
-        {["Meus endereços", "Meus pedidos", "Notificações", "Ajuda e perguntas frequentes"].map(
-          (item) => (
-            <Pressable
-              key={item}
-              style={styles.profileRow}
-              onPress={() =>
-                Alert.alert("Em desenvolvimento", `${item} será adicionado em uma próxima etapa.`)
-              }
-            >
-              <Text style={styles.profileRowText}>{item}</Text>
-              <Text style={styles.profileArrow}>›</Text>
-            </Pressable>
-          )
-        )}
-      </>
+
+        <Text style={styles.sectionTitle}>
+          Minha conta
+        </Text>
+
+        <ProfileOption
+          icon="📍"
+          title="Meus endereços"
+          subtitle="Cadastre e gerencie seus endereços"
+          onPress={() => setShowAddressScreen(true)}
+        />
+
+        <ProfileOption
+          icon="📦"
+          title="Meus pedidos"
+          subtitle="Veja seus pedidos anteriores"
+          onPress={() =>
+            Alert.alert(
+              "Meus pedidos",
+              "Aqui aparecerão seus pedidos."
+            )
+          }
+        />
+
+        <ProfileOption
+          icon="❤️"
+          title="Favoritos"
+          subtitle="Suas pizzas favoritas"
+          onPress={() =>
+            Alert.alert(
+              "Favoritos",
+              "Aqui aparecerão suas pizzas favoritas."
+            )
+          }
+        />
+
+        <ProfileOption
+          icon="🔔"
+          title="Notificações"
+          subtitle="Gerencie suas notificações"
+          onPress={() =>
+            Alert.alert(
+              "Notificações",
+              "Configurações de notificações."
+            )
+          }
+        />
+
+        <Text style={styles.sectionTitle}>
+          Ajuda
+        </Text>
+
+        <ProfileOption
+          icon="❓"
+          title="Perguntas frequentes"
+          subtitle="Tire suas dúvidas"
+          onPress={() =>
+            Alert.alert(
+              "FAQ",
+              "Em breve teremos as perguntas frequentes."
+            )
+          }
+        />
+
+        <ProfileOption
+          icon="💬"
+          title="Falar com a pizzaria"
+          subtitle="Entre em contato conosco"
+          onPress={() =>
+            Alert.alert(
+              "Chat",
+              "O chat será conectado posteriormente."
+            )
+          }
+        />
+
+        <ProfileOption
+          icon="⚙️"
+          title="Configurações"
+          subtitle="Preferências do aplicativo"
+          onPress={() =>
+            Alert.alert(
+              "Configurações",
+              "Configurações do aplicativo."
+            )
+          }
+        />
+
+        <Pressable
+          style={styles.logoutButton}
+          onPress={() =>
+            Alert.alert(
+              "Sair",
+              "A função de logout será conectada ao sistema de login posteriormente."
+            )
+          }
+        >
+          <Text style={styles.logoutText}>
+            Sair da conta
+          </Text>
+        </Pressable>
+      </ScrollView>
     );
   }
 
-  function SectionTitle({ title, subtitle }) {
-    return (
-      <View style={styles.sectionTitle}>
-        <Text style={styles.sectionHeading}>{title}</Text>
-        {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
-      </View>
-    );
-  }
-
-  function renderCurrentTab() {
-    switch (activeTab) {
-      case "Cardápio":
-        return renderMenu();
-      case "Sacola":
-        return renderCart();
-      case "Jogos":
-        return renderGames();
-      case "Perfil":
-        return renderProfile();
-      default:
-        return renderHome();
+  function renderContent() {
+    if (activeTab === "home") {
+      return renderHome();
     }
+
+    if (activeTab === "menu") {
+      return renderMenu();
+    }
+
+    if (activeTab === "cart") {
+      return renderCart();
+    }
+
+    if (activeTab === "games") {
+      return renderGames();
+    }
+
+    if (activeTab === "profile") {
+      return renderProfile();
+    }
+
+    return renderHome();
+  }
+
+  if (showAddressScreen) {
+    return (
+      <AddressScreen
+        onBack={() => setShowAddressScreen(false)}
+      />
+    );
   }
 
   return (
-    <View style={styles.app}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.darkRed} />
-
-      <View style={styles.topBar}>
-        <Pressable onPress={() => setActiveTab("Início")}>
-          <Text style={styles.logo}>🍕 Veneza</Text>
-          <Text style={styles.logoSubtitle}>SANTA MASSA</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.topCart}
-          onPress={() => setActiveTab("Sacola")}
-        >
-          <Text style={styles.topCartText}>🛍️ {cartCount}</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.content,
-          { maxWidth: wide ? 1000 : 700 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderCurrentTab()}
-        <Text style={styles.footer}>Veneza Santa Massa • Feita com carinho ❤️</Text>
-      </ScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      {renderContent()}
 
       <View style={styles.bottomNav}>
-        {[
-          { name: "Início", emoji: "🏠" },
-          { name: "Cardápio", emoji: "🍕" },
-          { name: "Sacola", emoji: "🛍️" },
-          { name: "Jogos", emoji: "🎁" },
-          { name: "Perfil", emoji: "👤" },
-        ].map((item) => (
-          <Pressable
-            key={item.name}
-            style={styles.navItem}
-            onPress={() => setActiveTab(item.name)}
-          >
-            <Text style={styles.navEmoji}>{item.emoji}</Text>
-            <Text
-              style={[
-                styles.navLabel,
-                activeTab === item.name && styles.navLabelActive,
-              ]}
-            >
-              {item.name}
-            </Text>
-            {activeTab === item.name && <View style={styles.navIndicator} />}
-          </Pressable>
-        ))}
+        <NavButton
+          icon="🏠"
+          label="Início"
+          active={activeTab === "home"}
+          onPress={() => setActiveTab("home")}
+        />
+
+        <NavButton
+          icon="🍕"
+          label="Cardápio"
+          active={activeTab === "menu"}
+          onPress={() => setActiveTab("menu")}
+        />
+
+        <NavButton
+          icon="🛍️"
+          label="Sacola"
+          active={activeTab === "cart"}
+          badge={cartQuantity}
+          onPress={() => setActiveTab("cart")}
+        />
+
+        <NavButton
+          icon="🎮"
+          label="Jogos"
+          active={activeTab === "games"}
+          onPress={() => setActiveTab("games")}
+        />
+
+        <NavButton
+          icon="👤"
+          label="Perfil"
+          active={activeTab === "profile"}
+          onPress={() => setActiveTab("profile")}
+        />
       </View>
 
       <Modal
-        visible={!!selectedProduct}
+        visible={selectedPizza !== null}
         animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedProduct(null)}
+        transparent
+        onRequestClose={() => setSelectedPizza(null)}
       >
-        <View style={styles.modalRoot}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalHeaderTitle}>Monte sua pizza 🍕</Text>
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => setSelectedProduct(null)}
-            >
-              <Text style={styles.closeButtonText}>✕</Text>
-            </Pressable>
-          </View>
-
-          {selectedProduct && (
-            <>
-              <ScrollView
-                style={styles.modalScroll}
-                contentContainerStyle={styles.modalContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <Image
-                  source={{ uri: selectedProduct.image }}
-                  style={styles.modalImage}
-                />
-
-                <Text style={styles.modalProductName}>
-                  {selectedProduct.name}
-                </Text>
-                <Text style={styles.modalDescription}>
-                  {selectedProduct.description}
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Personalize sua pizza 🍕
                 </Text>
 
-                <View style={styles.optionSection}>
-                  <Text style={styles.optionHeading}>1. Escolha o tamanho</Text>
-                  {SIZES.map((size) => {
-                    const chosen = selectedSize === size.name;
-                    const price = selectedProduct.price * size.multiplier;
-
-                    return (
-                      <Pressable
-                        key={size.name}
-                        style={[
-                          styles.optionRow,
-                          chosen && styles.optionRowSelected,
-                        ]}
-                        onPress={() => setSelectedSize(size.name)}
-                      >
-                        <View style={styles.optionRadio}>
-                          {chosen && <View style={styles.optionRadioInner} />}
-                        </View>
-                        <View style={styles.optionTextGroup}>
-                          <Text style={styles.optionName}>{size.name}</Text>
-                          <Text style={styles.optionDetail}>{size.detail}</Text>
-                        </View>
-                        <Text style={styles.optionPrice}>{money(price)}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                <View style={styles.optionSection}>
-                  <Text style={styles.optionHeading}>2. Escolha a borda</Text>
-                  {CRUSTS.map((crust) => {
-                    const chosen = selectedCrust === crust.name;
-
-                    return (
-                      <Pressable
-                        key={crust.name}
-                        style={[
-                          styles.optionRow,
-                          chosen && styles.optionRowSelected,
-                        ]}
-                        onPress={() => setSelectedCrust(crust.name)}
-                      >
-                        <View style={styles.optionRadio}>
-                          {chosen && <View style={styles.optionRadioInner} />}
-                        </View>
-                        <Text style={styles.optionName}>{crust.name}</Text>
-                        <Text style={styles.optionPrice}>
-                          {crust.price === 0 ? "Grátis" : `+ ${money(crust.price)}`}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                <View style={styles.optionSection}>
-                  <Text style={styles.optionHeading}>3. Adicione extras</Text>
-                  <Text style={styles.optionHint}>
-                    Você pode escolher mais de um.
-                  </Text>
-
-                  {EXTRAS.map((extra) => {
-                    const chosen = selectedExtras.includes(extra.name);
-
-                    return (
-                      <Pressable
-                        key={extra.name}
-                        style={[
-                          styles.optionRow,
-                          chosen && styles.optionRowSelected,
-                        ]}
-                        onPress={() => toggleExtra(extra.name)}
-                      >
-                        <View
-                          style={[
-                            styles.extraCheckbox,
-                            chosen && styles.extraCheckboxSelected,
-                          ]}
-                        >
-                          {chosen && <Text style={styles.checkmark}>✓</Text>}
-                        </View>
-                        <Text style={styles.optionName}>{extra.name}</Text>
-                        <Text style={styles.optionPrice}>
-                          + {money(extra.price)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                <View style={styles.optionSection}>
-                  <Text style={styles.optionHeading}>4. Quantas pizzas?</Text>
-                  <View style={styles.quantityPicker}>
-                    <Pressable
-                      style={styles.quantityButton}
-                      onPress={() => setQuantity((value) => Math.max(1, value - 1))}
-                    >
-                      <Text style={styles.quantityButtonText}>−</Text>
-                    </Pressable>
-                    <Text style={styles.quantityText}>{quantity}</Text>
-                    <Pressable
-                      style={styles.quantityButton}
-                      onPress={() => setQuantity((value) => value + 1)}
-                    >
-                      <Text style={styles.quantityButtonText}>+</Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                <View style={{ height: 24 }} />
-              </ScrollView>
-
-              <View style={styles.modalBottom}>
-                <View>
-                  <Text style={styles.modalTotalLabel}>Total</Text>
-                  <Text style={styles.modalTotalPrice}>
-                    {money(customizationPrice * quantity)}
-                  </Text>
-                </View>
-                <Pressable style={styles.modalAddButton} onPress={addToCart}>
-                  <Text style={styles.modalAddButtonText}>
-                    Adicionar à sacola
+                <Pressable
+                  onPress={() => setSelectedPizza(null)}
+                >
+                  <Text style={styles.closeText}>
+                    ✕
                   </Text>
                 </Pressable>
               </View>
-            </>
-          )}
+
+              {selectedPizza && (
+                <>
+                  <Text style={styles.modalPizzaName}>
+                    {selectedPizza.name}
+                  </Text>
+
+                  <Text style={styles.modalDescription}>
+                    {selectedPizza.description}
+                  </Text>
+
+                  <Text style={styles.optionTitle}>
+                    Tamanho
+                  </Text>
+
+                  {["Pequena", "Média", "Grande", "Família"].map(
+                    (size) => (
+                      <OptionButton
+                        key={size}
+                        label={size}
+                        selected={selectedSize === size}
+                        onPress={() =>
+                          setSelectedSize(size)
+                        }
+                      />
+                    )
+                  )}
+
+                  <Text style={styles.optionTitle}>
+                    Borda
+                  </Text>
+
+                  {[
+                    "Tradicional",
+                    "Recheada com Catupiry",
+                    "Recheada com Cheddar",
+                  ].map((crust) => (
+                    <OptionButton
+                      key={crust}
+                      label={crust}
+                      selected={selectedCrust === crust}
+                      onPress={() =>
+                        setSelectedCrust(crust)
+                      }
+                    />
+                  ))}
+
+                  <Text style={styles.optionTitle}>
+                    Extras
+                  </Text>
+
+                  {[
+                    { name: "Bacon", price: 5 },
+                    { name: "Cheddar", price: 4 },
+                    { name: "Azeitona", price: 2 },
+                  ].map((extra) => (
+                    <OptionButton
+                      key={extra.name}
+                      label={`${extra.name} (+R$ ${extra.price.toFixed(
+                        2
+                      )})`}
+                      selected={selectedExtras.includes(
+                        extra.name
+                      )}
+                      onPress={() =>
+                        toggleExtra(extra.name)
+                      }
+                    />
+                  ))}
+
+                  <Text style={styles.optionTitle}>
+                    Quantidade
+                  </Text>
+
+                  <View style={styles.modalQuantity}>
+                    <Pressable
+                      style={styles.quantityButtonLarge}
+                      onPress={() =>
+                        setPizzaQuantity(
+                          Math.max(1, pizzaQuantity - 1)
+                        )
+                      }
+                    >
+                      <Text style={styles.quantityButtonText}>
+                        −
+                      </Text>
+                    </Pressable>
+
+                    <Text style={styles.modalQuantityText}>
+                      {pizzaQuantity}
+                    </Text>
+
+                    <Pressable
+                      style={styles.quantityButtonLarge}
+                      onPress={() =>
+                        setPizzaQuantity(
+                          pizzaQuantity + 1
+                        )
+                      }
+                    >
+                      <Text style={styles.quantityButtonText}>
+                        +
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <Pressable
+                    style={styles.addButton}
+                    onPress={addToCart}
+                  >
+                    <Text style={styles.addButtonText}>
+                      Adicionar à sacola
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
+  );
+}
+
+function PizzaCard({ product, onPress }) {
+  return (
+    <Pressable
+      style={styles.pizzaCard}
+      onPress={onPress}
+    >
+      <View style={styles.pizzaImagePlaceholder}>
+        <Text style={styles.pizzaEmoji}>
+          🍕
+        </Text>
+      </View>
+
+      <View style={styles.pizzaInfo}>
+        <Text style={styles.pizzaName}>
+          {product.name}
+        </Text>
+
+        <Text style={styles.pizzaDescription}>
+          {product.description}
+        </Text>
+
+        <View style={styles.pizzaBottom}>
+          <Text style={styles.pizzaPrice}>
+            R$ {product.price.toFixed(2)}
+          </Text>
+
+          <View style={styles.plusButton}>
+            <Text style={styles.plusText}>
+              +
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function ProfileOption({
+  icon,
+  title,
+  subtitle,
+  onPress,
+}) {
+  return (
+    <Pressable
+      style={styles.profileOption}
+      onPress={onPress}
+    >
+      <View style={styles.profileIcon}>
+        <Text style={styles.profileIconText}>
+          {icon}
+        </Text>
+      </View>
+
+      <View style={{ flex: 1 }}>
+        <Text style={styles.profileOptionTitle}>
+          {title}
+        </Text>
+
+        <Text style={styles.profileOptionSubtitle}>
+          {subtitle}
+        </Text>
+      </View>
+
+      <Text style={styles.arrow}>
+        ›
+      </Text>
+    </Pressable>
+  );
+}
+
+function NavButton({
+  icon,
+  label,
+  active,
+  badge,
+  onPress,
+}) {
+  return (
+    <Pressable
+      style={styles.navButton}
+      onPress={onPress}
+    >
+      <View>
+        <Text
+          style={[
+            styles.navIcon,
+            active && styles.navIconActive,
+          ]}
+        >
+          {icon}
+        </Text>
+
+        {badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {badge}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Text
+        style={[
+          styles.navLabel,
+          active && styles.navLabelActive,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function OptionButton({
+  label,
+  selected,
+  onPress,
+}) {
+  return (
+    <Pressable
+      style={[
+        styles.optionButton,
+        selected && styles.optionButtonSelected,
+      ]}
+      onPress={onPress}
+    >
+      <Text
+        style={[
+          styles.optionButtonText,
+          selected && styles.optionButtonTextSelected,
+        ]}
+      >
+        {selected ? "✓ " : ""}
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  app: {
+  safeArea: {
     flex: 1,
-    backgroundColor: COLORS.cream,
+    backgroundColor: "#FFF8F3",
   },
-  topBar: {
-    backgroundColor: COLORS.red,
+
+  container: {
+    flex: 1,
+    backgroundColor: "#FFF8F3",
+  },
+
+  content: {
+    padding: 20,
+    paddingBottom: 110,
+  },
+
+  hero: {
+    backgroundColor: "#D92B20",
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 25,
+  },
+
+  heroSmall: {
+    color: "#FFD9A0",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+
+  heroTitle: {
+    color: "#FFFFFF",
+    fontSize: 36,
+    fontWeight: "900",
+    marginTop: 5,
+  },
+
+  heroText: {
+    color: "#FFF4EE",
+    fontSize: 16,
+    lineHeight: 23,
+    marginTop: 8,
+    maxWidth: 300,
+  },
+
+  heroButton: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 14,
+    borderRadius: 14,
+    marginTop: 20,
+  },
+
+  heroButtonText: {
+    color: "#D92B20",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  sectionTitle: {
+    fontSize: 21,
+    fontWeight: "900",
+    color: "#291A16",
+    marginBottom: 14,
+    marginTop: 8,
+  },
+
+  categoryScroll: {
+    marginBottom: 22,
+  },
+
+  categoryButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8D8D1",
+    marginRight: 10,
+  },
+
+  categoryButtonActive: {
+    backgroundColor: "#D92B20",
+    borderColor: "#D92B20",
+  },
+
+  categoryText: {
+    color: "#5C4740",
+    fontWeight: "700",
+  },
+
+  categoryTextActive: {
+    color: "#FFFFFF",
+  },
+
+  pizzaCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 15,
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: "#F0E2DC",
+  },
+
+  pizzaImagePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 16,
+    backgroundColor: "#FFE1C7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  pizzaEmoji: {
+    fontSize: 48,
+  },
+
+  pizzaInfo: {
+    flex: 1,
+    paddingLeft: 14,
+    justifyContent: "space-between",
+  },
+
+  pizzaName: {
+    color: "#291A16",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  pizzaDescription: {
+    color: "#765F57",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 5,
+  },
+
+  pizzaBottom: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  logo: {
-    color: COLORS.white,
-    fontSize: 23,
-    fontWeight: "900",
-  },
-  logoSubtitle: {
-    color: "#FFE5D2",
-    fontSize: 10,
-    letterSpacing: 3,
-    fontWeight: "800",
-    marginTop: 1,
-  },
-  topCart: {
-    backgroundColor: COLORS.darkRed,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  topCartText: {
-    color: COLORS.white,
-    fontWeight: "800",
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    width: "100%",
-    alignSelf: "center",
-    padding: 16,
-    paddingBottom: 30,
-  },
-  hero: {
-    backgroundColor: COLORS.darkRed,
-    borderRadius: 22,
-    padding: 23,
-    minHeight: 220,
-    justifyContent: "center",
-    marginBottom: 28,
-    overflow: "hidden",
-  },
-  heroText: {
-    maxWidth: 450,
-  },
-  heroEyebrow: {
-    color: "#FFD4A7",
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-  heroTitle: {
-    color: COLORS.white,
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 36,
-  },
-  heroDescription: {
-    color: "#FFE8DD",
-    fontSize: 14,
-    lineHeight: 21,
     marginTop: 10,
-    marginBottom: 18,
   },
-  heroButton: {
-    backgroundColor: COLORS.orange,
-    alignSelf: "flex-start",
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  heroButtonText: {
-    color: COLORS.dark,
-    fontWeight: "900",
-  },
-  sectionTitle: {
-    marginBottom: 15,
-    marginTop: 5,
-  },
-  sectionHeading: {
-    color: COLORS.dark,
-    fontSize: 23,
-    fontWeight: "900",
-  },
-  sectionSubtitle: {
-    color: COLORS.gray,
-    fontSize: 13,
-    marginTop: 4,
-  },
-  productsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 25,
-  },
-  productCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 3,
-    borderWidth: 1,
-    borderColor: "#F1E8E0",
-  },
-  productImage: {
-    width: "100%",
-    height: 140,
-    backgroundColor: COLORS.lightGray,
-  },
-  popularTag: {
-    position: "absolute",
-    top: 9,
-    left: 8,
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  popularTagText: {
-    color: COLORS.dark,
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  productInfo: {
-    paddingHorizontal: 11,
-    paddingTop: 10,
-    paddingBottom: 7,
-  },
-  productName: {
-    color: COLORS.dark,
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  productDescription: {
-    color: COLORS.gray,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 5,
-    minHeight: 34,
-  },
-  productPrice: {
-    color: COLORS.red,
+
+  pizzaPrice: {
+    color: "#D92B20",
     fontSize: 17,
     fontWeight: "900",
-    marginTop: 8,
   },
-  customizeHint: {
-    color: COLORS.gray,
-    fontSize: 10,
-    marginTop: 3,
-  },
-  addButton: {
-    backgroundColor: COLORS.red,
-    borderRadius: 10,
-    padding: 10,
-    margin: 9,
-    marginTop: 0,
-    alignItems: "center",
-  },
-  addButtonText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: "900",
-  },
-  categoryGrid: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 25,
-  },
-  categoryCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 18,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#F1E8E0",
-  },
-  categoryEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  categoryName: {
-    color: COLORS.dark,
-    fontSize: 13,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  categoryFilters: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 18,
-  },
-  filterButton: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: "#E9DDD3",
-    borderRadius: 20,
-    paddingHorizontal: 17,
-    paddingVertical: 10,
-  },
-  filterButtonActive: {
-    backgroundColor: COLORS.red,
-    borderColor: COLORS.red,
-  },
-  filterText: {
-    color: COLORS.dark,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  filterTextActive: {
-    color: COLORS.white,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: "#EEE4DB",
-    paddingTop: 9,
-    paddingBottom: 8,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 48,
-    gap: 3,
-  },
-  navEmoji: {
-    fontSize: 19,
-  },
-  navLabel: {
-    color: COLORS.gray,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  navLabelActive: {
-    color: COLORS.red,
-    fontWeight: "900",
-  },
-  navIndicator: {
-    height: 3,
-    width: 20,
-    borderRadius: 4,
-    backgroundColor: COLORS.red,
-    marginTop: 2,
-  },
-  footer: {
-    textAlign: "center",
-    color: COLORS.gray,
-    fontSize: 11,
-    paddingVertical: 18,
-  },
-  muted: {
-    color: COLORS.gray,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  emptyState: {
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    padding: 28,
-    borderRadius: 18,
-    marginTop: 10,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    color: COLORS.dark,
-    fontSize: 19,
-    fontWeight: "900",
-    marginBottom: 8,
-  },
-  primaryButton: {
-    backgroundColor: COLORS.red,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-    alignItems: "center",
-    marginTop: 18,
-  },
-  primaryButtonText: {
-    color: COLORS.white,
-    fontWeight: "900",
-    fontSize: 13,
-  },
-  cartItem: {
-    flexDirection: "row",
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#F1E8E0",
-  },
-  cartImage: {
-    width: 92,
-    height: 105,
-    borderRadius: 12,
-    backgroundColor: COLORS.lightGray,
-  },
-  cartDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  cartName: {
-    color: COLORS.dark,
-    fontSize: 15,
-    fontWeight: "900",
-    marginBottom: 5,
-  },
-  cartOption: {
-    color: COLORS.gray,
-    fontSize: 11,
-    lineHeight: 17,
-  },
-  cartPrice: {
-    color: COLORS.red,
-    fontWeight: "900",
-    fontSize: 15,
-    marginTop: 6,
-  },
-  quantityRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8,
-    flexWrap: "wrap",
-  },
-  quantityButton: {
-    width: 31,
-    height: 31,
-    borderRadius: 10,
-    backgroundColor: "#F8EAE4",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityButtonText: {
-    color: COLORS.red,
-    fontSize: 20,
-    fontWeight: "900",
-  },
-  quantityText: {
-    color: COLORS.dark,
-    fontSize: 15,
-    fontWeight: "900",
-    minWidth: 15,
-    textAlign: "center",
-  },
-  removeText: {
-    color: COLORS.red,
-    fontSize: 11,
-    fontWeight: "800",
-    marginLeft: 4,
-  },
-  totalCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 20,
-    marginTop: 5,
-    marginBottom: 20,
-  },
-  totalLabel: {
-    color: COLORS.gray,
-    fontSize: 13,
-  },
-  totalPrice: {
-    color: COLORS.red,
-    fontSize: 28,
-    fontWeight: "900",
-    marginTop: 4,
-  },
-  cartNotice: {
-    color: COLORS.gray,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 8,
-  },
-  featureCard: {
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 25,
-    marginTop: 8,
-  },
-  featureEmoji: {
-    fontSize: 52,
-    marginBottom: 12,
-  },
-  featureTitle: {
-    color: COLORS.dark,
-    fontSize: 20,
-    fontWeight: "900",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  profileCard: {
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 25,
-    marginBottom: 15,
-  },
-  profileEmoji: {
-    fontSize: 45,
-    marginBottom: 12,
-  },
-  profileRow: {
-    backgroundColor: COLORS.white,
-    padding: 17,
-    borderRadius: 12,
-    marginBottom: 9,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  profileRowText: {
-    color: COLORS.dark,
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  profileArrow: {
-    color: COLORS.red,
-    fontSize: 24,
-  },
-  modalRoot: {
-    flex: 1,
-    backgroundColor: COLORS.cream,
-  },
-  modalHeader: {
-    backgroundColor: COLORS.red,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  modalHeaderTitle: {
-    color: COLORS.white,
-    fontSize: 19,
-    fontWeight: "900",
-  },
-  closeButton: {
+
+  plusButton: {
     width: 34,
     height: 34,
-    backgroundColor: COLORS.darkRed,
     borderRadius: 17,
+    backgroundColor: "#D92B20",
     alignItems: "center",
     justifyContent: "center",
   },
-  closeButtonText: {
-    color: COLORS.white,
+
+  plusText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "700",
+    lineHeight: 27,
+  },
+
+  promoCard: {
+    backgroundColor: "#FFF0D8",
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+
+  promoEmoji: {
+    fontSize: 34,
+    marginRight: 12,
+  },
+
+  promoTitle: {
+    color: "#291A16",
     fontSize: 16,
     fontWeight: "900",
   },
-  modalScroll: {
-    flex: 1,
+
+  promoText: {
+    color: "#765F57",
+    fontSize: 13,
+    marginTop: 3,
   },
-  modalContent: {
-    width: "100%",
-    maxWidth: 700,
-    alignSelf: "center",
-    padding: 16,
-    paddingBottom: 20,
+
+  smallButton: {
+    backgroundColor: "#D92B20",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginLeft: 8,
   },
-  modalImage: {
-    width: "100%",
-    height: 210,
-    borderRadius: 18,
-    backgroundColor: COLORS.lightGray,
+
+  smallButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
   },
-  modalProductName: {
-    color: COLORS.dark,
-    fontSize: 25,
+
+  pageTitle: {
+    fontSize: 30,
     fontWeight: "900",
-    marginTop: 16,
+    color: "#291A16",
+    marginTop: 5,
   },
-  modalDescription: {
-    color: COLORS.gray,
-    fontSize: 14,
-    lineHeight: 21,
+
+  pageSubtitle: {
+    color: "#765F57",
+    fontSize: 15,
+    marginTop: 5,
+    marginBottom: 22,
+  },
+
+  emptyCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 30,
+    alignItems: "center",
+    marginTop: 30,
+  },
+
+  emptyEmoji: {
+    fontSize: 60,
+  },
+
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#291A16",
+    marginTop: 12,
+  },
+
+  emptyText: {
+    color: "#765F57",
     marginTop: 6,
+    textAlign: "center",
   },
-  optionSection: {
-    marginTop: 24,
+
+  primaryButton: {
+    backgroundColor: "#D92B20",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 18,
   },
-  optionHeading: {
-    color: COLORS.dark,
+
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+
+  disabledButton: {
+    opacity: 0.4,
+  },
+
+  cartItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F0E2DC",
+  },
+
+  cartItemName: {
+    color: "#291A16",
     fontSize: 17,
     fontWeight: "900",
-    marginBottom: 11,
   },
-  optionHint: {
-    color: COLORS.gray,
+
+  cartItemDetails: {
+    color: "#765F57",
     fontSize: 12,
-    marginTop: -5,
+    marginTop: 3,
+  },
+
+  cartPrice: {
+    color: "#D92B20",
+    fontWeight: "900",
+    marginTop: 7,
+  },
+
+  quantityBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+
+  quantityButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#F8E4DE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  quantityButtonText: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#D92B20",
+  },
+
+  quantityText: {
+    fontSize: 16,
+    fontWeight: "900",
+    marginHorizontal: 10,
+    color: "#291A16",
+  },
+
+  totalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 5,
+  },
+
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: "#EDE2D9",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 13,
-    marginBottom: 8,
-    gap: 10,
+
+  totalLabel: {
+    color: "#765F57",
+    fontSize: 15,
   },
-  optionRowSelected: {
-    borderColor: COLORS.red,
-    backgroundColor: "#FFF0E9",
+
+  totalValue: {
+    color: "#291A16",
+    fontWeight: "700",
   },
-  optionRadio: {
-    width: 19,
-    height: 19,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.red,
-    alignItems: "center",
-    justifyContent: "center",
+
+  divider: {
+    height: 1,
+    backgroundColor: "#EDE0DA",
+    marginVertical: 8,
   },
-  optionRadioInner: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: COLORS.red,
-  },
-  optionTextGroup: {
-    flex: 1,
-  },
-  optionName: {
-    color: COLORS.dark,
-    fontSize: 13,
-    fontWeight: "800",
-    flex: 1,
-  },
-  optionDetail: {
-    color: COLORS.gray,
-    fontSize: 11,
-    marginTop: 3,
-  },
-  optionPrice: {
-    color: COLORS.dark,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  extraCheckbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: "#B8A9A0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  extraCheckboxSelected: {
-    backgroundColor: COLORS.red,
-    borderColor: COLORS.red,
-  },
-  checkmark: {
-    color: COLORS.white,
-    fontSize: 13,
+
+  totalFinalLabel: {
+    color: "#291A16",
+    fontSize: 18,
     fontWeight: "900",
   },
-  quantityPicker: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
-    alignSelf: "flex-start",
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 8,
+
+  totalFinalValue: {
+    color: "#D92B20",
+    fontSize: 20,
+    fontWeight: "900",
   },
-  modalBottom: {
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: "#EEE4DB",
+
+  checkoutButton: {
+    backgroundColor: "#D92B20",
     padding: 16,
-    paddingBottom: 20,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 15,
+  },
+
+  checkoutButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  pointsCard: {
+    backgroundColor: "#D92B20",
+    borderRadius: 22,
+    padding: 22,
+    marginBottom: 15,
+  },
+
+  pointsLabel: {
+    color: "#FFE8E0",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  pointsValue: {
+    color: "#FFFFFF",
+    fontSize: 34,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+
+  gameCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 22,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#F0E2DC",
+  },
+
+  gameEmoji: {
+    fontSize: 42,
+  },
+
+  gameTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#291A16",
+    marginTop: 8,
+  },
+
+  gameText: {
+    color: "#765F57",
+    lineHeight: 20,
+    marginTop: 5,
+  },
+
+  secondaryButton: {
+    backgroundColor: "#FFF0D8",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 16,
+  },
+
+  secondaryButtonText: {
+    color: "#B64B17",
+    fontWeight: "900",
+  },
+
+  couponCard: {
+    backgroundColor: "#FFF0D8",
+    borderRadius: 22,
+    padding: 22,
+    marginBottom: 15,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F1D0A5",
+  },
+
+  couponTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#291A16",
+  },
+
+  couponCode: {
+    color: "#D92B20",
+    fontSize: 28,
+    fontWeight: "900",
+    letterSpacing: 2,
+    marginTop: 8,
+  },
+
+  couponText: {
+    color: "#765F57",
+    marginTop: 5,
+  },
+
+  profileHeader: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 20,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
+    marginBottom: 25,
   },
-  modalTotalLabel: {
-    color: COLORS.gray,
-    fontSize: 12,
+
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#D92B20",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
   },
-  modalTotalPrice: {
-    color: COLORS.red,
-    fontSize: 23,
+
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 25,
     fontWeight: "900",
+  },
+
+  profileName: {
+    color: "#291A16",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  profileEmail: {
+    color: "#765F57",
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  profileOption: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  profileIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 14,
+    backgroundColor: "#FFF0D8",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  profileIconText: {
+    fontSize: 22,
+  },
+
+  profileOptionTitle: {
+    color: "#291A16",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+
+  profileOptionSubtitle: {
+    color: "#765F57",
+    fontSize: 12,
     marginTop: 3,
   },
-  modalAddButton: {
+
+  arrow: {
+    color: "#D92B20",
+    fontSize: 30,
+    fontWeight: "300",
+  },
+
+  logoutButton: {
+    borderWidth: 1,
+    borderColor: "#D92B20",
+    borderRadius: 14,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 15,
+    marginBottom: 30,
+  },
+
+  logoutText: {
+    color: "#D92B20",
+    fontWeight: "900",
+  },
+
+  bottomNav: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 75,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E9DDD8",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingBottom: 5,
+  },
+
+  navButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 55,
+  },
+
+  navIcon: {
+    fontSize: 22,
+    opacity: 0.55,
+  },
+
+  navIconActive: {
+    opacity: 1,
+  },
+
+  navLabel: {
+    color: "#8A7770",
+    fontSize: 10,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+
+  navLabelActive: {
+    color: "#D92B20",
+  },
+
+  badge: {
+    position: "absolute",
+    right: -8,
+    top: -5,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#D92B20",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "900",
+  },
+
+  modalOverlay: {
     flex: 1,
-    maxWidth: 260,
-    backgroundColor: COLORS.red,
-    borderRadius: 13,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "flex-end",
+  },
+
+  modalCard: {
+    backgroundColor: "#FFF8F3",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: "90%",
+    padding: 22,
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
-  modalAddButtonText: {
-    color: COLORS.white,
-    fontSize: 13,
+
+  modalTitle: {
+    fontSize: 21,
+    fontWeight: "900",
+    color: "#291A16",
+  },
+
+  closeText: {
+    fontSize: 23,
+    color: "#765F57",
+  },
+
+  modalPizzaName: {
+    fontSize: 25,
+    fontWeight: "900",
+    color: "#D92B20",
+    marginTop: 20,
+  },
+
+  modalDescription: {
+    color: "#765F57",
+    lineHeight: 20,
+    marginTop: 5,
+  },
+
+  optionTitle: {
+    color: "#291A16",
+    fontSize: 16,
+    fontWeight: "900",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+
+  optionButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E6D9D2",
+    borderRadius: 13,
+    padding: 14,
+    marginBottom: 8,
+  },
+
+  optionButtonSelected: {
+    backgroundColor: "#FFF0D8",
+    borderColor: "#D92B20",
+  },
+
+  optionButtonText: {
+    color: "#5C4740",
+    fontWeight: "700",
+  },
+
+  optionButtonTextSelected: {
+    color: "#D92B20",
+    fontWeight: "900",
+  },
+
+  modalQuantity: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 5,
+  },
+
+  quantityButtonLarge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#F8E4DE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalQuantityText: {
+    fontSize: 20,
+    fontWeight: "900",
+    marginHorizontal: 25,
+    color: "#291A16",
+  },
+
+  addButton: {
+    backgroundColor: "#D92B20",
+    padding: 17,
+    borderRadius: 15,
+    alignItems: "center",
+    marginTop: 25,
+    marginBottom: 10,
+  },
+
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "900",
   },
 });
